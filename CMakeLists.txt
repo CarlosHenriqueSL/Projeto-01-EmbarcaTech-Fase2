@@ -35,7 +35,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(Trabalho01 Trabalho01.c inc/ssd1306.c numeros/numeros.c)
+add_executable(Trabalho01 Trabalho01.c lib/ssd1306.c lib/numeros.c)
 
 pico_set_program_name(Trabalho01 "Trabalho01")
 pico_set_program_version(Trabalho01 "0.1")
@@ -58,14 +58,9 @@ target_include_directories(Trabalho01 PRIVATE
 
 # Add any user requested libraries
 target_link_libraries(Trabalho01 
-        hardware_spi
         hardware_i2c
-        hardware_dma
         hardware_pio
-        hardware_interp
-        hardware_timer
-        hardware_watchdog
-        hardware_clocks
+        hardware_irq
         hardware_adc
         hardware_pwm
         )

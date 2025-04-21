@@ -12,8 +12,8 @@
 #include "hardware/i2c.h"
 #include "hardware/adc.h"
 #include "hardware/pwm.h"
-#include "inc/ssd1306.h"
-#include "numeros/numeros.h"
+#include "lib/ssd1306.h"
+#include "lib/numeros.h"
 #include "blink.pio.h"
 
 // Pinagem e configurações
