@@ -79,44 +79,45 @@ void init_uart()
 void init_peripherals()
 {
     // --- I2C para OLED SSD1306 ---
-    i2c_init(I2C_PORT, 400000);           
+    i2c_init(I2C_PORT, 400000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(I2C_SDA);               // Pull-up interno
+    gpio_pull_up(I2C_SDA); // Pull-up interno
     gpio_pull_up(I2C_SCL);
 
     // --- ADC para joystick ---
-    adc_init();                          // Liga periférico ADC
-    adc_gpio_init(JOY_GPIO_ADX);         // Associa ADC1 ao GPIO27
+    adc_init();                  // Liga periférico ADC
+    adc_gpio_init(JOY_GPIO_ADX); // Associa ADC1 ao GPIO27
 
     // --- PWM para LED e buzzer ---
     gpio_set_function(LED_PIN_RED, GPIO_FUNC_PWM);
     gpio_set_function(BUZZER_PIN, GPIO_FUNC_PWM);
-    uint slice_led    = pwm_gpio_to_slice_num(LED_PIN_RED);
+    uint slice_led = pwm_gpio_to_slice_num(LED_PIN_RED);
     uint slice_buzzer = pwm_gpio_to_slice_num(BUZZER_PIN);
-    pwm_set_wrap(slice_led, PWM_WRAP);          
+    pwm_set_wrap(slice_led, PWM_WRAP);
     pwm_set_wrap(slice_buzzer, PWM_WRAP);
-    pwm_set_enabled(slice_led, true);           // Ativa PWM do LED
-    pwm_set_enabled(slice_buzzer, false);       // Mantém buzzer desligado
+    pwm_set_enabled(slice_led, true);     // Ativa PWM do LED
+    pwm_set_enabled(slice_buzzer, false); // Mantém buzzer desligado
 }
 
 // Desliga display, LEDs e buzzer
 void desligar(ssd1306_t *ssd, PIO pio, uint sm,
               bool *prev_on, uint slice_led, uint slice_buzzer)
 {
-    pwm_set_gpio_level(LED_PIN_RED, 0);          // Apaga LED vermelho
-    pwm_set_enabled(slice_buzzer, false);        // Desliga buzzer
+    pwm_set_gpio_level(LED_PIN_RED, 0);   // Apaga LED vermelho
+    pwm_set_enabled(slice_buzzer, false); // Desliga buzzer
 
     // Limpa tela OLED
     ssd1306_fill(ssd, false);
     ssd1306_send_data(ssd);
 
     // Zera todos os pixels WS2812
-    for (int i = 0; i < NUM_PIXELS; i++) {
+    for (int i = 0; i < NUM_PIXELS; i++)
+    {
         pio_sm_put_blocking(pio, sm, 0);
     }
 
-    *prev_on = false;                            // Próxima vez, reativa tela
+    *prev_on = false; // Próxima vez, reativa tela
     sleep_ms(100);
 }
 
@@ -165,39 +166,51 @@ void gpio_irq_handler(uint gpio, uint32_t events)
     uint32_t now = to_ms_since_boot(get_absolute_time());
 
     // --- Botão do joystick pressionado ---
-    if (gpio == JOY_BUTTON_PIN && (events & GPIO_IRQ_EDGE_FALL)) {
-        if (now - last_irq_time_joy < DEBOUNCE_MS) return;
+    if (gpio == JOY_BUTTON_PIN && (events & GPIO_IRQ_EDGE_FALL))
+    {
+        if (now - last_irq_time_joy < DEBOUNCE_MS)
+            return;
         last_irq_time_joy = now;
 
         // Converte valor máximo em porcentagem
         double total = valor_max_adc;
         printf("Valor máximo lido: %.3f\n", total);
-        if      (total <= 0.1) porcentagem_atual = 0;
-        else if (total <= 0.2) porcentagem_atual = 20;
-        else if (total <= 0.4) porcentagem_atual = 40;
-        else if (total <= 0.6) porcentagem_atual = 60;
-        else if (total <= 0.8) porcentagem_atual = 80;
-        else                   porcentagem_atual = 100;
+        if (total <= 0.1)
+            porcentagem_atual = 0;
+        else if (total <= 0.2)
+            porcentagem_atual = 20;
+        else if (total <= 0.4)
+            porcentagem_atual = 40;
+        else if (total <= 0.6)
+            porcentagem_atual = 60;
+        else if (total <= 0.8)
+            porcentagem_atual = 80;
+        else
+            porcentagem_atual = 100;
 
-        feedback_pending = true;  // solicita feedback 
+        feedback_pending = true; // solicita feedback
     }
 
     // --- Botão A: sistema on/off ---
-    else if (gpio == BUTTON_A && (events & GPIO_IRQ_EDGE_FALL)) {
-        if (now - last_irq_time_a < DEBOUNCE_MS) return;
+    else if (gpio == BUTTON_A && (events & GPIO_IRQ_EDGE_FALL))
+    {
+        if (now - last_irq_time_a < DEBOUNCE_MS)
+            return;
         last_irq_time_a = now;
         sistema_ligado = !sistema_ligado;
     }
 
     // --- Botão B faz reset de valores máximos ---
-    else if (gpio == BUTTON_B && (events & GPIO_IRQ_EDGE_FALL)) {
-        if (now - last_irq_time_b < DEBOUNCE_MS) return;
+    else if (gpio == BUTTON_B && (events & GPIO_IRQ_EDGE_FALL))
+    {
+        if (now - last_irq_time_b < DEBOUNCE_MS)
+            return;
         last_irq_time_b = now;
 
         porcentagem_atual = 0;
-        valor_max_adc    = 0.0;
+        valor_max_adc = 0.0;
         feedback_pending = false;
-        pwm_set_gpio_level(LED_PIN_RED, 0);  // apaga LED
+        pwm_set_gpio_level(LED_PIN_RED, 0); // apaga LED
     }
 }
 
@@ -232,11 +245,11 @@ void init_gpio()
 
 int main(void)
 {
-    stdio_init_all();   // Inicializa STDIO para printf
+    stdio_init_all(); // Inicializa STDIO para printf
 
     init_uart();        // UART para debug
     init_gpio();        // GPIOs e interrupções
-    init_peripherals();// I2C, ADC e PWM
+    init_peripherals(); // I2C, ADC e PWM
 
     // Inicializa display OLED
     ssd1306_t ssd;
@@ -248,11 +261,11 @@ int main(void)
     // Configuração PIO para LEDs WS2812
     PIO pio = pio0;
     uint offset = pio_add_program(pio, &blink_program);
-    uint sm     = pio_claim_unused_sm(pio, true);
+    uint sm = pio_claim_unused_sm(pio, true);
     blink_program_init(pio, sm, offset, WS2812_PIN);
 
     // Slices PWM para LED e buzzer
-    uint slice_led    = pwm_gpio_to_slice_num(LED_PIN_RED);
+    uint slice_led = pwm_gpio_to_slice_num(LED_PIN_RED);
     uint slice_buzzer = pwm_gpio_to_slice_num(BUZZER_PIN);
 
     bool prev_on = false; // Indica se sistema já exibiu tela de "iniciado"
@@ -287,18 +300,20 @@ int main(void)
         adc_select_input(JOY_X_ADC);
         uint16_t adc_x = adc_read();
 
-        // Mapeia o valor do ADC para a posição do retângulo no display 
+        // Mapeia o valor do ADC para a posição do retângulo no display
         uint8_t sq_x = (adc_x * (ssd.width - 8)) / 4095;
         ssd1306_rect(&ssd, 31, sq_x, 8, 8, true, true);
         ssd1306_send_data(&ssd);
 
         // Calcula deslocamento absoluto do centro e aplica deadzone
         int delta = abs((int)adc_x - JOY_CENTER);
-        if (delta < JOY_DEADZONE) delta = 0;
+        if (delta < JOY_DEADZONE)
+            delta = 0;
 
         valor_atual_adc = (double)delta / JOY_CENTER;
         // Atualiza valor máximo se passou do anterior
-        if (valor_atual_adc > valor_max_adc) {
+        if (valor_atual_adc > valor_max_adc)
+        {
             valor_max_adc = valor_atual_adc;
         }
 
@@ -309,31 +324,35 @@ int main(void)
         // Se o feedback for solicitado (botão do joystick), emite luz e som
         if (feedback_pending)
         {
-            if (porcentagem_atual == 0) {
+            if (porcentagem_atual == 0)
+            {
                 pwm_set_gpio_level(LED_PIN_RED, 0);
-            } else {
+            }
+            else
+            {
                 // Ajusta LED vermelho ao valor máximo registrado
                 pwm_set_gpio_level(LED_PIN_RED,
-                    (uint32_t)(valor_max_adc * PWM_WRAP));
+                                   (uint32_t)(valor_max_adc * PWM_WRAP));
 
                 // Toca buzzer em decaimento de frequência
                 double start = BUZZER_FREQ_MIN +
-                        valor_max_adc * (BUZZER_FREQ_MAX - BUZZER_FREQ_MIN);
+                               valor_max_adc * (BUZZER_FREQ_MAX - BUZZER_FREQ_MIN);
                 for (int i = 0; i < 10; i++)
                 {
                     double freq = start * (1.0 - (double)i / 10.0);
-                    if (freq < 1.0) break;
+                    if (freq < 1.0)
+                        break;
                     uint32_t wrap = (uint32_t)(125000000.0 / freq) - 1;
                     pwm_set_wrap(slice_buzzer, wrap);
                     pwm_set_chan_level(slice_buzzer,
-                        pwm_gpio_to_channel(BUZZER_PIN), wrap / 2);
+                                       pwm_gpio_to_channel(BUZZER_PIN), wrap / 2);
                     pwm_set_enabled(slice_buzzer, true);
                     sleep_ms(50);
                 }
                 pwm_set_enabled(slice_buzzer, false);
             }
             // Limpa estado de feedback após execução
-            valor_max_adc   = 0.0;
+            valor_max_adc = 0.0;
             feedback_pending = false;
         }
 
