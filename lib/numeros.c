@@ -1,3 +1,7 @@
+/*
+ * Aquivo para armazenar as porcentagens exibidas na matriz de LEDs.
+*/
+
 #include "numeros.h"
 
 

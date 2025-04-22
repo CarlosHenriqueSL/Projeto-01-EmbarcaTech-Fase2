@@ -1,3 +1,7 @@
+/*
+ * Arquivo de configuração e desenhos no display ssd1306.
+*/
+
 #include "ssd1306.h"
 #include "font.h"
 
